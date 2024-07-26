@@ -54,26 +54,25 @@
 # # separate data in E(PSI) and Std(PSI) fields
 # # We get one row per junction
 # dpsi <- dpsidta |>
-#   separate_rows(dpsi, p20, p05, psiA, psiB,
+#   separate_rows(dpsi, p20, p05, psiA, psiB, sj_coords,
 #                 sep = ";") |>
 #   group_by(neurA, neurB, lsv_id) |>
 #   mutate(junction_id = row_number()) |>
 #   ungroup()  |>
 #   mutate(across(c(dpsi,p20, p05, psiA, psiB), as.double),
-#          junction_id = factor(junction_id))
-# 
-# 
-# dpsi <- dpsi |>
-#   mutate(gene_name = i2s(gene_id, gids, warn_missing = TRUE))
+#          junction_id = factor(junction_id)) |>
+#   mutate(gene_name = i2s(gene_id, gids, warn_missing = TRUE),
+#          .after = gene_id)
 # 
 # 
 # 
 # 
-# set.seed(123)
-# table_event_names <- tibble(lsv_id = unique(dpsi$lsv_id),
-#                             event_name = babynames::babynames$name |> unique() |> sample(length(unique(dpsi$lsv_id))))
+# # set.seed(123)
+# # table_event_names <- tibble(lsv_id = unique(dpsi$lsv_id),
+# #                             event_name = babynames::babynames$name |> unique() |> sample(length(unique(dpsi$lsv_id))))
 # # write_csv(table_event_names, "data_use/240726_table_event_names.csv")
 # 
+# table_event_names <- read_csv("data_use/240726_table_event_names.csv")
 # dpsi <- dpsi |>
 #   left_join(table_event_names,
 #             by = "lsv_id")
