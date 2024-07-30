@@ -243,6 +243,9 @@ server <- function(input, output) {
                                      
                                      r_das_events() |>
                                        mutate(junction_name = paste0(event_name, "-", junction_id)) |>
+                                       mutate(gene_id = lapply(gene_id, \(gid){
+                                         paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
+                                       } )) |>
                                        select(`Gene Name` = gene_name, `Junction Name`=junction_name,
                                               `Gene ID` = gene_id, `Event ID` = lsv_id, `LSV type` = lsv_type,
                                               `Junction Coordinates` = sj_coords,
@@ -434,6 +437,12 @@ server <- function(input, output) {
                                         valueExpr = {
                                           
                                           r_sets_das_events() |>
+                                            mutate(gene_id = lapply(gene_id, \(gid){
+                                              paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
+                                            } )) |>
+                                            mutate(p_t = round(p_t, 3),
+                                                   fdr = round(fdr, 3),
+                                                   mean_deltapsi = round(mean_deltapsi, 2)) |>
                                             select(`Gene Name` = gene_name, `Junction Name`=junction_name,
                                                    `Gene ID` = gene_id, `Event ID` = lsv_id, `LSV type` = lsv_type,
                                                    `Junction Coordinates` = sj_coords,
@@ -482,7 +491,7 @@ server <- function(input, output) {
                                          
                                          ggplotly(gg_das_genes,
                                                   width = 640,
-                                                  height = 15*nrow(toplot)) |>
+                                                  height = 10*nrow(toplot)) |>
                                            layout(margin = list(r=200))
                                          
                                        })
