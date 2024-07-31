@@ -24,7 +24,7 @@ tbl_dpsidb <- tbl(dpsidb, "dpsi")
 
 
 
-LIMIT_NB_EVENTS_TO_PLOT <- 100
+LIMIT_NB_EVENTS_TO_PLOT <- 20
 
 
 measured_neurons <- readLines("data_use/measured_neurons.txt")
