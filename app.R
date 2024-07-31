@@ -1,14 +1,14 @@
 
 # Packages ----
 library(shiny)
-library(dplyr)
-library(dbplyr)
+library(dplyr, warn.conflicts = FALSE)
+library(dbplyr, warn.conflicts = FALSE)
 library(tidyr)
 
-library(DT)
+library(DT, warn.conflicts = FALSE)
 
 library(ggplot2)
-library(plotly)
+library(plotly, warn.conflicts = FALSE)
 
 library(shinyFeedback)
 
@@ -148,6 +148,8 @@ server <- function(input, output) {
     is_valid <- (length(neur) > 0)
     shinyFeedback::feedbackDanger("pair_selected_neurA", !is_valid, "Invalid neuron name")
     req(is_valid, cancelOutput = TRUE)
+    
+    message("   Pair neur A ", neur)
     neur
   })
   
@@ -162,6 +164,8 @@ server <- function(input, output) {
     is_valid <- (length(neur) > 0)
     shinyFeedback::feedbackDanger("pair_selected_neurB", !is_valid, "Invalid neuron name")
     req(is_valid, cancelOutput = TRUE)
+    
+    message("   Pair neur B ", neur)
     neur
   })
   
@@ -172,6 +176,7 @@ server <- function(input, output) {
     eventExpr = input$pair_submit,
     valueExpr = {
       
+      message("   Pair: get DAS events")
       tbl_dpsidb |>
         filter(
           (
@@ -195,6 +200,9 @@ server <- function(input, output) {
   r_pair_summary <- eventReactive(
     eventExpr = input$pair_submit,
     valueExpr = {
+      
+      
+      message("   Pair: text summary")
       
       nb_events_das <- r_das_events() |>
         pull(lsv_id) |>
@@ -244,6 +252,8 @@ server <- function(input, output) {
     eventExpr = input$pair_submit,
     valueExpr = {
       
+      message("   Pair: get table")
+      
       r_das_events() |>
         mutate(junction_name = paste0(event_name, "-", junction_id)) |>
         mutate(gene_id = lapply(gene_id, \(gid){
@@ -265,6 +275,7 @@ server <- function(input, output) {
     eventExpr = input$pair_submit,
     valueExpr = {
       
+      message("   Pair: plot")
       
       if(length(r_lsvs_das()) > LIMIT_NB_EVENTS_TO_PLOT){
         return(invisible(NULL))
@@ -324,6 +335,8 @@ server <- function(input, output) {
     is_valid <- (length(neurs) > 0)
     shinyFeedback::feedbackDanger("sets_selected_neursA", !is_valid, "No valid neuron name")
     req(is_valid, cancelOutput = TRUE)
+    
+    message("   Set A: ", neurs)
     neurs
   })
   
@@ -339,6 +352,8 @@ server <- function(input, output) {
     is_valid <- (length(neurs) > 0)
     shinyFeedback::feedbackDanger("sets_selected_neursB", !is_valid, "No valid neuron name")
     req(is_valid, cancelOutput = TRUE)
+    
+    message("   Set B: ", neurs)
     neurs
   })
   
@@ -347,6 +362,9 @@ server <- function(input, output) {
   r_sets_psis <- eventReactive(
     eventExpr = input$sets_submit,
     valueExpr = {
+      
+      message("   Set: get psis subset")
+      
       tbl_dpsidb |>
         filter((neurA %in% !!r_sets_selected_neursA() & neurB %in% !!r_sets_selected_neursB()) |
                  (neurA %in% !!r_sets_selected_neursB() & neurB %in% !!r_sets_selected_neursA())) |>
@@ -367,6 +385,8 @@ server <- function(input, output) {
     eventExpr = input$sets_submit,
     valueExpr = {
       
+      message("   Set: das events")
+      
       r_sets_psis() |>
         summarize(p_t = tryCatch(t.test(psi_setA, psi_setB)[["p.value"]],
                                  error = \(x) NA_real_),
@@ -386,6 +406,8 @@ server <- function(input, output) {
   r_sets_summary <- eventReactive(
     eventExpr = input$sets_submit,
     valueExpr = {
+      
+      message("   Set: text summary")
       
       nb_events_das <- r_sets_das_events() |>
         pull(lsv_id) |>
@@ -443,6 +465,8 @@ server <- function(input, output) {
     eventExpr = input$sets_submit,
     valueExpr = {
       
+      message("   Set: table")
+      
       r_sets_das_events() |>
         mutate(gene_id = lapply(gene_id, \(gid){
           paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
@@ -466,10 +490,13 @@ server <- function(input, output) {
     eventExpr = input$sets_submit,
     valueExpr = {
       
+      message("   Set: plot")
       
       if(length(r_sets_lsvs_das()) > LIMIT_NB_EVENTS_TO_PLOT){
         return(invisible(NULL))
       }
+      
+      message("  plotting!")
       
       toplot <- r_sets_psis() |>
         filter(lsv_id %in% !!( r_sets_lsvs_das() )) |>
