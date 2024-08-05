@@ -373,12 +373,9 @@ server <- function(input, output) {
                psi_setB = if_else(neurA %in% !!r_sets_selected_neursB(),
                                   psiA, psiB),
                junction_name = paste0(event_name, "-", junction_id))
+      
       message("got sub: ", length(sub |> pull(junction_name)))
       
-      sub <- sub |>
-        collect()
-      
-      message("collected")
       sub
     })
   
@@ -393,18 +390,52 @@ server <- function(input, output) {
       
       message("   Set: das events")
       
+      
+      junction_names <- r_sets_psis() |> pull(junction_name)
+      sets_psiA <- r_sets_psis() |> pull(psi_setA) |> split(f = junction_names)
+      sets_psiB <- r_sets_psis() |> pull(psi_setB) |> split(f = junction_names)
+      group_names <- names(sets_psiA)
+      
+      n <- length(sets_psiA)
+      stopifnot(length(sets_psiB) == n)
+      stopifnot(length(unique(junction_names)) == n)
+      
+      message("Nb of psis: ", length(junction_names))
+      message("Nb of tests: ", n)
+      
+      all_pvals <- numeric(n) |> setNames(group_names)
+      all_mean_deltapsi <- numeric(n) |> setNames(group_names)
+      for(i in seq_len(n)){
+        all_pvals[[i]] <- tryCatch(t.test(sets_psiA[[i]], sets_psiB[[i]])[["p.value"]],
+                                   error = \(x) NA_real_)
+        all_mean_deltapsi[[i]] <- mean(sets_psiA[[i]]) - mean(sets_psiB[[i]])
+      }
+      
+      all_fdr <- p.adjust(all_pvals, method = "BH") |> setNames(group_names)
+      
+      keep <- which(
+        all_fdr <= input$sets_selected_fdr &
+          abs(all_mean_deltapsi) >= input$sets_selected_deltapsi
+      )
+      
+      message("filtered: ", length(keep)," pass")
+      
+      jcts_to_keep <- names(keep)
+      
       set_of_das_evs <- r_sets_psis() |>
-        summarize(p_t = tryCatch(t.test(psi_setA, psi_setB)[["p.value"]],
-                                 error = \(x) NA_real_),
-                  mean_deltapsi = mean(psi_setA) - mean(psi_setB),
-                  .by = c(gene_name, gene_id, event_name,
-                          lsv_id, junction_id, lsv_type, sj_coords, junction_name)) |>
-        mutate(fdr = p.adjust(p_t, method = "BH")) |>
-        filter(fdr <= input$sets_selected_fdr,
-               abs(mean_deltapsi) >= input$sets_selected_deltapsi)
+        filter(junction_name %in% jcts_to_keep) |>
+        select(gene_id, gene_name, junction_name, lsv_id, lsv_type,
+               sj_coords) |>
+        distinct() |>
+        collect()
       
-      message("Collected DAS events: ", length(set_of_das_evs |> pull(fdr)))
       
+      set_of_das_evs$p_t <- all_pvals[ set_of_das_evs$junction_name ]
+      set_of_das_evs$fdr <- all_fdr[ set_of_das_evs$junction_name ]
+      set_of_das_evs$mean_deltapsi <- all_mean_deltapsi[ set_of_das_evs$junction_name ]
+      
+      
+      message("got it")
       set_of_das_evs
       
     })
