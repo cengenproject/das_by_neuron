@@ -365,15 +365,21 @@ server <- function(input, output) {
       
       message("   Set: get psis subset")
       
-      tbl_dpsidb |>
+      sub <- tbl_dpsidb |>
         filter((neurA %in% !!r_sets_selected_neursA() & neurB %in% !!r_sets_selected_neursB()) |
                  (neurA %in% !!r_sets_selected_neursB() & neurB %in% !!r_sets_selected_neursA())) |>
         mutate(psi_setA = if_else(neurA %in% !!r_sets_selected_neursA(),
                                   psiA, psiB),
                psi_setB = if_else(neurA %in% !!r_sets_selected_neursB(),
                                   psiA, psiB),
-               junction_name = paste0(event_name, "-", junction_id)) |>
+               junction_name = paste0(event_name, "-", junction_id))
+      message("got sub: ", length(sub |> pull(junction_name)))
+      
+      sub <- sub |>
         collect()
+      
+      message("collected")
+      sub
     })
   
   
@@ -387,7 +393,7 @@ server <- function(input, output) {
       
       message("   Set: das events")
       
-      r_sets_psis() |>
+      set_of_das_evs <- r_sets_psis() |>
         summarize(p_t = tryCatch(t.test(psi_setA, psi_setB)[["p.value"]],
                                  error = \(x) NA_real_),
                   mean_deltapsi = mean(psi_setA) - mean(psi_setB),
@@ -396,6 +402,10 @@ server <- function(input, output) {
         mutate(fdr = p.adjust(p_t, method = "BH")) |>
         filter(fdr <= input$sets_selected_fdr,
                abs(mean_deltapsi) >= input$sets_selected_deltapsi)
+      
+      message("Collected DAS events: ", length(set_of_das_evs |> pull(fdr)))
+      
+      set_of_das_evs
       
     })
   
@@ -451,6 +461,7 @@ server <- function(input, output) {
         text_err <- ""
       }
       
+      message("Collected text")
       
       list(p(text_experiment),
            p(text_res),
@@ -467,7 +478,7 @@ server <- function(input, output) {
       
       message("   Set: table")
       
-      r_sets_das_events() |>
+      tab <- r_sets_das_events() |>
         mutate(gene_id = lapply(gene_id, \(gid){
           paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
         } )) |>
@@ -480,6 +491,9 @@ server <- function(input, output) {
                `Mean DeltaPSI` = mean_deltapsi,
                `p value` = p_t, `FDR` = fdr)
       
+      message("Collected table, ", nrow(tab))
+      
+      tab
     })
   
   
@@ -510,6 +524,7 @@ server <- function(input, output) {
         mutate(event_name_annot = paste0(gene_name, " - ", event_name)) |>
         distinct()
       
+      message("Collected toplot: ", length(toplot |> pull(event_name_annot)))
       
       
       gg_das_genes <- toplot |>
@@ -523,6 +538,7 @@ server <- function(input, output) {
         geom_col(aes(x = PSI, y = Neuron, fill = junction_id),
                  position = position_stack())
       
+      message("Generated ggplot")
       
       ggplotly(gg_das_genes,
                width = 640,
