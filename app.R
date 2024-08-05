@@ -24,7 +24,7 @@ tbl_dpsidb <- tbl(dpsidb, "dpsi")
 
 
 
-LIMIT_NB_EVENTS_TO_PLOT <- 20
+LIMIT_NB_EVENTS_TO_PLOT <- 100
 
 
 measured_neurons <- readLines("data_use/measured_neurons.txt")
@@ -257,7 +257,7 @@ server <- function(input, output) {
       r_das_events() |>
         mutate(junction_name = paste0(event_name, "-", junction_id)) |>
         mutate(gene_id = lapply(gene_id, \(gid){
-          paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
+          paste0('<a href="http://splicingapps.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
         } )) |>
         select(`Gene Name` = gene_name, `Junction Name`=junction_name,
                `Gene ID` = gene_id, `Event ID` = lsv_id, `LSV type` = lsv_type,
@@ -511,7 +511,7 @@ server <- function(input, output) {
       
       tab <- r_sets_das_events() |>
         mutate(gene_id = lapply(gene_id, \(gid){
-          paste0('<a href="http://splicing.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
+          paste0('<a href="http://splicingapps.cengen.org/voila/gene/',gid,'/">',gid,'</a>')
         } )) |>
         mutate(p_t = round(p_t, 3),
                fdr = round(fdr, 3),
