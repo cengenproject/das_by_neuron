@@ -61,11 +61,14 @@ ui <- fluidPage(
                   label = "Second neuron:",
                   value = "OLQ"),
         
-        numericInput("selected_p20", "Probability that the event is DAS", value = 0.5),
+        numericInput("selected_p20", "Probability that the event is DAS",
+                     value = 0.5, min = 0, max = 1, step = .1),
         
-        numericInput("selected_p05", "Probability that the event is not DAS", value = 0.05),
+        numericInput("selected_p05", "Probability that the event is not DAS",
+                     value = 0.05, min = 0, max = 1, step = .1),
         
-        numericInput("selected_dpsi", "Minimal deltaPSI", value = 0.7),
+        numericInput("selected_dpsi", "Minimal deltaPSI",
+                     value = 0.5, min = 0, max = 1, step = .1),
         
         actionButton("pair_submit",
                      "Run this pair of neurons")
@@ -98,9 +101,11 @@ ui <- fluidPage(
                   label = "Second set of neuron(s):",
                   value = "AVM,PVM"),
         
-        numericInput("sets_selected_fdr", "FDR threshold", value = 0.05),
+        numericInput("sets_selected_fdr", "FDR threshold",
+                     value = 0.05, min = 0, max = 1, step = .1),
         
-        numericInput("sets_selected_deltapsi", "DeltaPSI threshold", value = 0.5),
+        numericInput("sets_selected_deltapsi", "DeltaPSI threshold",
+                     value = 0.5, min = 0, max = 1, step = .1),
         
         
         actionButton("sets_submit",
