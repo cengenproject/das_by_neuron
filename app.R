@@ -128,6 +128,14 @@ ui <- fluidPage(
       )
     )
     
+  ),
+  # Footer
+  hr(),
+  tags$footer(
+    "See app documentation at",
+    tags$a("splicing.cengen.org", href="http://splicing.cengen.org"),
+    " and source code ",
+    tags$a("on Github", href="https://github.com/cengenproject/das_by_neuron")
   )
 )
 
