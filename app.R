@@ -23,8 +23,9 @@ onStop(function() {
 tbl_dpsidb <- tbl(dpsidb, "dpsi")
 
 
-
+# hardcoded parameters
 LIMIT_NB_EVENTS_TO_PLOT <- 100
+VERBOSE <- 0
 
 
 measured_neurons <- readLines("data_use/measured_neurons.txt")
@@ -162,7 +163,7 @@ server <- function(input, output) {
     shinyFeedback::feedbackDanger("pair_selected_neurA", !is_valid, "Invalid neuron name")
     req(is_valid, cancelOutput = TRUE)
     
-    message("   Pair neur A ", neur)
+    if(VERBOSE) message("   Pair neur A ", neur)
     neur
   })
   
@@ -178,7 +179,7 @@ server <- function(input, output) {
     shinyFeedback::feedbackDanger("pair_selected_neurB", !is_valid, "Invalid neuron name")
     req(is_valid, cancelOutput = TRUE)
     
-    message("   Pair neur B ", neur)
+    if(VERBOSE) message("   Pair neur B ", neur)
     neur
   })
   
@@ -349,7 +350,7 @@ server <- function(input, output) {
     shinyFeedback::feedbackDanger("sets_selected_neursA", !is_valid, "No valid neuron name")
     req(is_valid, cancelOutput = TRUE)
     
-    message("   Set A: ", neurs)
+    if(VERBOSE) message("   Set A: ", neurs)
     neurs
   })
   
@@ -366,7 +367,7 @@ server <- function(input, output) {
     shinyFeedback::feedbackDanger("sets_selected_neursB", !is_valid, "No valid neuron name")
     req(is_valid, cancelOutput = TRUE)
     
-    message("   Set B: ", neurs)
+    if(VERBOSE) message("   Set B: ", neurs)
     neurs
   })
   
@@ -387,7 +388,7 @@ server <- function(input, output) {
                                   psiA, psiB),
                junction_name = paste0(event_name, "-", junction_id))
       
-      message("got sub: ", length(sub |> pull(junction_name)))
+      if(VERBOSE) message("got sub: ", length(sub |> pull(junction_name)))
       
       sub
     })
@@ -413,8 +414,8 @@ server <- function(input, output) {
       stopifnot(length(sets_psiB) == n)
       stopifnot(length(unique(junction_names)) == n)
       
-      message("Nb of psis: ", length(junction_names))
-      message("Nb of tests: ", n)
+      if(VERBOSE) message("Nb of psis: ", length(junction_names))
+      if(VERBOSE) message("Nb of tests: ", n)
       
       all_pvals <- numeric(n) |> setNames(group_names)
       all_mean_deltapsi <- numeric(n) |> setNames(group_names)
@@ -431,7 +432,7 @@ server <- function(input, output) {
           abs(all_mean_deltapsi) >= input$sets_selected_deltapsi
       )
       
-      message("filtered: ", length(keep)," pass")
+      if(VERBOSE) message("filtered: ", length(keep)," pass")
       
       jcts_to_keep <- names(keep)
       
@@ -448,7 +449,7 @@ server <- function(input, output) {
       set_of_das_evs$mean_deltapsi <- all_mean_deltapsi[ set_of_das_evs$junction_name ]
       
       
-      message("got it")
+      if(VERBOSE) message("got it")
       set_of_das_evs
       
     })
@@ -505,7 +506,7 @@ server <- function(input, output) {
         text_err <- ""
       }
       
-      message("Collected text")
+      if(VERBOSE) message("Collected text")
       
       list(p(text_experiment),
            p(text_res),
@@ -535,7 +536,7 @@ server <- function(input, output) {
                `Mean DeltaPSI` = mean_deltapsi,
                `p value` = p_t, `FDR` = fdr)
       
-      message("Collected table, ", nrow(tab))
+      if(VERBOSE) message("Collected table, ", nrow(tab))
       
       tab
     })
@@ -554,7 +555,7 @@ server <- function(input, output) {
         return(invisible(NULL))
       }
       
-      message("  plotting!")
+      if(VERBOSE) message("  plotting!")
       
       toplot <- r_sets_psis() |>
         filter(lsv_id %in% !!( r_sets_lsvs_das() )) |>
@@ -568,7 +569,7 @@ server <- function(input, output) {
         mutate(event_name_annot = paste0(gene_name, " - ", event_name)) |>
         distinct()
       
-      message("Collected toplot: ", length(toplot |> pull(event_name_annot)))
+      if(VERBOSE) message("Collected toplot: ", length(toplot |> pull(event_name_annot)))
       
       
       gg_das_genes <- toplot |>
@@ -582,7 +583,7 @@ server <- function(input, output) {
         geom_col(aes(x = PSI, y = Neuron, fill = junction_id),
                  position = position_stack())
       
-      message("Generated ggplot")
+      if(VERBOSE) message("Generated ggplot")
       
       ggplotly(gg_das_genes,
                width = 640,
