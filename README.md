@@ -1,9 +1,11 @@
 
+Documentation at [splicing.cengen.org](http://splicing.cengen.org).
+
 # DAS by neuron
 
 Shiny app to help make comparisons of alternative splicing between neurons on the CeNGEN data.
 
-The local quantification was performed with MAJIQ, and its results can be examined using the online VOILA app at [http://splicing.cengen.org/voila](http://splicing.cengen.org/voila). However, this provides one page per gene, and does not provide functionality to discover genes varying between neurons.
+The local quantification was performed with MAJIQ, and its results can be examined using the online VOILA app at [http://splicingapps.cengen.org/voila](http://splicingapps.cengen.org/voila). However, this provides one page per gene, and does not provide functionality to discover genes varying between neurons.
 
 This app allows the user to enter neurons of interest and gets events and genes that appear differentially alternativelty spliced (DAS).
 
