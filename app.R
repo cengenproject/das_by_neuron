@@ -197,8 +197,8 @@ server <- function(input, output) {
             (neurA %in% !!r_pair_selected_neurA() ) & 
               (neurB %in% !!r_pair_selected_neurB() )
           ) | (
-            (neurA %in% !!r_pair_selected_neurA() ) & 
-              (neurB %in% !!r_pair_selected_neurB() )
+            (neurA %in% !!r_pair_selected_neurB() ) & 
+              (neurB %in% !!r_pair_selected_neurA() )
           ),
           p20 >= input$selected_p20,
           p05 <= input$selected_p05,
