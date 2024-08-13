@@ -19,7 +19,6 @@ validate_neurons <- function(neurs, neurons_table){
                   MOTONEURON="MOTOR",
                   MOTONEURONS="MOTOR",
                   PHARYNX="PHARYNGEAL",
-                  PHA="PHARYNGEAL",
                   CILIA="CILIATED",
                   CHOLINERGIC="ACH",
                   ACHERGIC="ACH",
