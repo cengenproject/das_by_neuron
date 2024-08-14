@@ -4,6 +4,7 @@ library(shiny)
 library(dplyr, warn.conflicts = FALSE)
 library(dbplyr, warn.conflicts = FALSE)
 library(tidyr)
+library(forcats)
 
 library(DT, warn.conflicts = FALSE)
 
@@ -13,14 +14,15 @@ library(plotly, warn.conflicts = FALSE)
 library(shinyFeedback)
 
 # Data ----
-dpsidb <- DBI::dbConnect(duckdb::duckdb(),
-                         dbdir = "data_use/240726_dpsi.duckdb",
+db_con <- DBI::dbConnect(duckdb::duckdb(),
+                         dbdir = "data_use/240813_dpsi.duckdb",
                          read_only = TRUE)
 onStop(function() {
-  DBI::dbDisconnect(dpsidb)
+  DBI::dbDisconnect(db_con)
 })
 
-tbl_dpsidb <- tbl(dpsidb, "dpsi")
+tbl_dpsidb <- tbl(db_con, "dpsi")
+tbl_psidb <- tbl(db_con, "psi")
 
 
 # hardcoded parameters
@@ -379,14 +381,15 @@ server <- function(input, output) {
       
       message("   Set: get psis subset")
       
-      sub <- tbl_dpsidb |>
-        filter((neurA %in% !!r_sets_selected_neursA() & neurB %in% !!r_sets_selected_neursB()) |
-                 (neurA %in% !!r_sets_selected_neursB() & neurB %in% !!r_sets_selected_neursA())) |>
-        mutate(psi_setA = if_else(neurA %in% !!r_sets_selected_neursA(),
-                                  psiA, psiB),
-               psi_setB = if_else(neurA %in% !!r_sets_selected_neursB(),
-                                  psiA, psiB),
+      neurs_selected <- union(r_sets_selected_neursA(),
+                              r_sets_selected_neursB())
+      
+      sub <- tbl_psidb |>
+        filter( neur %in% neurs_selected ) |>
+        mutate(set = if_else(neur %in% !!r_sets_selected_neursA(),
+                             "A", "B"),
                junction_name = paste0(event_name, "-", junction_id))
+      
       
       if(VERBOSE) message("got sub: ", length(sub |> pull(junction_name)))
       
@@ -404,25 +407,48 @@ server <- function(input, output) {
       
       message("   Set: das events")
       
+      # collect PSIs
+      junction_names_A <- r_sets_psis() |>
+        filter(set == "A") |>
+        arrange(junction_name) |>
+        pull(junction_name)
       
-      junction_names <- r_sets_psis() |> pull(junction_name)
-      sets_psiA <- r_sets_psis() |> pull(psi_setA) |> split(f = junction_names)
-      sets_psiB <- r_sets_psis() |> pull(psi_setB) |> split(f = junction_names)
-      group_names <- names(sets_psiA)
+      psi_setA <- r_sets_psis() |>
+        filter(set == "A") |>
+        arrange(junction_name) |>
+        pull(mean_psi_per_lsv_junction) |>
+        split(f = junction_names_A)
       
-      n <- length(sets_psiA)
-      stopifnot(length(sets_psiB) == n)
-      stopifnot(length(unique(junction_names)) == n)
       
-      if(VERBOSE) message("Nb of psis: ", length(junction_names))
+      junction_names_B <- r_sets_psis() |>
+        filter(set == "B") |>
+        arrange(junction_name) |>
+        pull(junction_name)
+      
+      psi_setB <- r_sets_psis() |>
+        filter(set == "B") |>
+        arrange(junction_name) |>
+        pull(mean_psi_per_lsv_junction) |>
+        split(f = junction_names_B)
+      
+      
+      group_names <- intersect(names(psi_setA), names(psi_setB))
+      
+      psi_setA <- psi_setA[group_names]
+      psi_setB <- psi_setB[group_names]
+      
+      
+      # tests!
+      n <- length(psi_setA)
+      
       if(VERBOSE) message("Nb of tests: ", n)
       
       all_pvals <- numeric(n) |> setNames(group_names)
       all_mean_deltapsi <- numeric(n) |> setNames(group_names)
       for(i in seq_len(n)){
-        all_pvals[[i]] <- tryCatch(t.test(sets_psiA[[i]], sets_psiB[[i]])[["p.value"]],
+        all_pvals[[i]] <- tryCatch(t.test(psi_setA[[i]], psi_setB[[i]])[["p.value"]],
                                    error = \(x) NA_real_)
-        all_mean_deltapsi[[i]] <- mean(sets_psiA[[i]]) - mean(sets_psiB[[i]])
+        all_mean_deltapsi[[i]] <- mean(psi_setA[[i]]) - mean(psi_setB[[i]])
       }
       
       all_fdr <- p.adjust(all_pvals, method = "BH") |> setNames(group_names)
@@ -497,12 +523,17 @@ server <- function(input, output) {
       }
       
       
-      if(length(r_sets_lsvs_das()) > LIMIT_NB_EVENTS_TO_PLOT){
+      if(length( r_sets_lsvs_das() ) > LIMIT_NB_EVENTS_TO_PLOT){
         
         text_err <- paste0("Too many DAS events (",length(r_sets_lsvs_das()),"), will not plot.
-                                   Consider using a more stringent filter (e.g. increase minimal deltaPSI).")
+                           Consider using a more stringent filter (e.g. increase the deltaPSI threshold).")
         
-      } else{
+      } else if(length( r_sets_lsvs_das() ) == 0){
+        
+        text_err <- paste0("No DAS events found.
+                           Consider increasing the FDR threshold or decreasing the deltaPSI threshold.")
+        
+      } else {
         text_err <- ""
       }
       
@@ -551,7 +582,9 @@ server <- function(input, output) {
       
       message("   Set: plot")
       
-      if(length(r_sets_lsvs_das()) > LIMIT_NB_EVENTS_TO_PLOT){
+      if(length( r_sets_lsvs_das() ) > LIMIT_NB_EVENTS_TO_PLOT){
+        return(invisible(NULL))
+      } else if(length( r_sets_lsvs_das() ) == 0){
         return(invisible(NULL))
       }
       
@@ -559,14 +592,12 @@ server <- function(input, output) {
       
       toplot <- r_sets_psis() |>
         filter(lsv_id %in% !!( r_sets_lsvs_das() )) |>
-        select(event_name, gene_name, junction_id, neurA,neurB,psiA,psiB) |>
+        select(event_name, gene_name, junction_id, neur, mean_psi_per_lsv_junction, set) |>
         as_tibble() |>
-        pivot_longer(-c(event_name, gene_name, junction_id),
-                     names_to = c(".value",NA),
-                     names_pattern = "(neur|psi)(A|B)") |>
-        rename(Neuron = neur, PSI = psi) |>
-        arrange(gene_name, event_name, junction_id) |>
-        mutate(event_name_annot = paste0(gene_name, " - ", event_name)) |>
+        rename(Neuron = neur, PSI = mean_psi_per_lsv_junction) |>
+        arrange(set, Neuron, gene_name, event_name, junction_id) |>
+        mutate(event_name_annot = paste0(gene_name, " - ", event_name),
+               Neuron = fct_inorder(Neuron)) |>
         distinct()
       
       if(VERBOSE) message("Collected toplot: ", length(toplot |> pull(event_name_annot)))
