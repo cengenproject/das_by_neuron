@@ -1,3 +1,4 @@
 data_raw
 R/prepare_dataset.R
 local
+data_use/240726_table_event_names.csv
