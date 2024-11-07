@@ -105,10 +105,10 @@ ui <- fluidPage(
                   value = "OLL,OLQ"),
         textInput(inputId = "sets_selected_neursB",
                   label = "Second set of neuron(s):",
-                  value = "AVM,PVM"),
+                  value = "sensory"),
         
         numericInput("sets_selected_fdr", "FDR threshold",
-                     value = 0.05, min = 0, max = 1, step = .1),
+                     value = 0.1, min = 0, max = 1, step = .1),
         
         numericInput("sets_selected_deltapsi", "DeltaPSI threshold",
                      value = 0.5, min = 0, max = 1, step = .1),
