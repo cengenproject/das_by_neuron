@@ -101,14 +101,14 @@ r_sets_das_events <- {
       all_mean_deltapsi[[i]] <- mean(psi_setA[[i]]) - mean(psi_setB[[i]])
     }
     
-    # hist(all_pvals, breaks = 50)
-    # plot(all_mean_deltapsi, -log10(all_fdr)); abline(h = -log10(0.05))
-    # hist(all_fdr, breaks = 50)
-    # table(all_fdr < .05)
     
     all_fdr <- p.adjust(all_pvals, method = "BH") |> setNames(group_names)
     
     
+    # hist(all_pvals, breaks = 50)
+    # plot(all_mean_deltapsi, -log10(all_fdr)); abline(h = -log10(0.05))
+    # hist(all_fdr, breaks = 50)
+    # table(all_fdr < .05)
     
     keep <- which(
       all_fdr <= input$sets_selected_fdr &
@@ -118,6 +118,22 @@ r_sets_das_events <- {
     if(VERBOSE) message("filtered: ", length(keep)," pass")
     
     jcts_to_keep <- names(keep)
+    
+    
+    # # For GO etc
+    # r_sets_psis |>
+    #   filter(junction_name %in% jcts_to_keep) |>
+    #   pull(gene_name) |>
+    #   unique() |>
+    #   clipr::write_clip()
+    # 
+    # all_tested_jcts <- names(all_fdr)
+    # r_sets_psis |>
+    #   filter(junction_name %in% all_tested_jcts) |>
+    #   pull(gene_name) |>
+    #   unique() |>
+    #   writeLines("background_list.txt")
+    
     
     set_of_das_evs <- r_sets_psis |>
       filter(junction_name %in% jcts_to_keep) |>
@@ -211,4 +227,6 @@ r_sets_gg_das_genes <- {
       layout(margin = list(r=200))
     
   }
+
+
 

@@ -87,6 +87,9 @@ ui <- fluidPage(
         dataTableOutput("pair_table_das_sjs",
                         width = "80%"),
         
+        downloadButton("pair_download_table",
+                       label = "Download table"),
+        
         plotly::plotlyOutput("pair_gg_das_genes",
                              width = "60%")
         
@@ -124,6 +127,10 @@ ui <- fluidPage(
         
         dataTableOutput("sets_table_das_sjs",
                         width = "80%"),
+        
+        downloadButton("set_download_table",
+                       label = "Download table"),
+        
         
         plotly::plotlyOutput("sets_gg_das_genes",
                              width = "60%")
@@ -285,6 +292,26 @@ server <- function(input, output) {
   
   
   output$pair_table_das_sjs <- renderDT(r_pair_table_das_sjs())
+  
+  #~ download table ----
+  output$pair_download_table <- downloadHandler(
+    filename = function(){
+      paste0(
+        format(Sys.time(),"%y%m%d-%H%M"),
+        "_",
+        r_pair_selected_neurA(),
+        "_",
+        r_pair_selected_neurB(),
+        ".tsv"
+      )
+    },
+    content = function(file){
+      r_pair_table_das_sjs() |>
+        readr::write_tsv(file)
+    }
+  )
+  
+  
   
   #~ plot ----
   r_pair_gg_das_genes <- eventReactive(
@@ -574,6 +601,32 @@ server <- function(input, output) {
   
   
   output$sets_table_das_sjs <- renderDT(r_sets_table_das_sjs())
+  
+  #~ download table ----
+  output$set_download_table <- downloadHandler(
+    filename = function(){
+      paste0(
+        format(Sys.time(),"%y%m%d-%H%M"),
+        "_",
+        r_sets_selected_neursA() |>
+          paste0(collapse = "") |>
+          substr(start = 0,
+                 stop = 20),
+        "_",
+        r_sets_selected_neursB() |>
+          paste0(collapse = "") |>
+          substr(start = 0,
+                 stop = 20),
+        ".tsv"
+      )
+    },
+    content = function(file){
+      r_sets_table_das_sjs() |>
+        readr::write_tsv(file)
+    }
+  )
+  
+  
   
   #~ plot ----
   r_sets_gg_das_genes <- eventReactive(
